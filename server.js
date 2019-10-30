@@ -1,5 +1,6 @@
 const express = require('express'); // importing a CommonJS module
 const helmet = require('helmet');
+const morgan = require('morgan');
 
 const hubsRouter = require('./hubs/hubs-router.js');
 
@@ -18,11 +19,26 @@ function requestLogger(req,res,next){
   next();
 }
 
+function gateKeeper(req, res, next){
+  // new way of reading data sent by the client
+  const password = req.headers.password || '';
+
+  if(password.toLowerCase() === 'mellon'){
+    next();
+  } else if (!password){
+    res.status(400).json({message: 'please provide a password'})
+  } else {
+    res.status(401).json({you: 'cannot pass!!'});
+  }
+}
+
 // global middleware
+server.use(gateKeeper)
 server.use(helmet()); // third party
 server.use(express.json()); // built-in
 server.use(dateLogger); //custom middleware
-server.use(requestLogger)
+server.use(requestLogger);
+server.use(morgan('dev'));
 
 server.use('/api/hubs', hubsRouter);
 
